@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Created by .ignore support plugin (hsz.mobi)
 ### Example user template template
 ### Example user template
@@ -8,6 +9,8 @@
 out
 gen
 ### Java template
+=======
+>>>>>>> ee5727cfd66ecff00943269a08ef897aeb272407
 # Compiled class file
 *.class
 
@@ -31,6 +34,7 @@ gen
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+<<<<<<< HEAD
 
 ### Java template
 # Compiled class file
@@ -65,3 +69,5 @@ hs_err_pid*
 *.iml
 out
 gen
+=======
+>>>>>>> ee5727cfd66ecff00943269a08ef897aeb272407

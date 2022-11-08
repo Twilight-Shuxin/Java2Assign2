@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Assignment 2 Tic-tac-toe Game
 
 This is a template for CS209A-22fall, assignment 2.
@@ -45,3 +46,7 @@ This is a demo view for the assignment. However, the basic functions are not com
 ## Hint
 
 You need to first decouple the view and controller, divide the controller into two components: **client** and **server**, and then use **socket** to communicate between the two components to complete the basic functions.
+=======
+# Java2Assign2
+Code repository for CS209 assignment2.
+>>>>>>> ee5727cfd66ecff00943269a08ef897aeb272407
