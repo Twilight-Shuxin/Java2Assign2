@@ -1,4 +1,6 @@
 package application;
+import javafx.util.Pair;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
@@ -9,7 +11,8 @@ public class Server {
 	ServerSocket serverSocket;
 	Queue<Integer> idQueue = new LinkedList<>();
 	Queue<Integer> playerList = new LinkedList<>();
-	Map<Integer, Integer> matchedMap = new HashMap<>();
+	Map<Integer, Pair<Integer, PlayerConnection>> matchedMap = new HashMap<>();
+	Pair<Integer, PlayerConnection> nullMatch = new Pair(-1, null);
 	int maxId = 0;
 
 	Server(int portNum) throws IOException {
@@ -20,6 +23,9 @@ public class Server {
 			ClientHandler clientSock = new ClientHandler(this, client);
 			new Thread(clientSock).start();
 		}
+	}
+
+	public void closedPlayer(int playerId) {
 	}
 
 	public int getId() {
@@ -41,17 +47,18 @@ public class Server {
 	}
 
 	public int managerMatch(int id) {
-		if(matchedMap.getOrDefault(id, -1) != -1) {
-			return matchedMap.get(id);
+		if(matchedMap.getOrDefault(id, nullMatch).getKey() != -1) {
+			return 0;
 		}
 		for(Iterator<Integer> it = playerList.iterator(); it.hasNext(); ) {
 			int player = it.next();
 			if(player == id)
 				continue;
-			if(matchedMap.getOrDefault(player, -1) == -1) {
-				matchedMap.put(player, id);
-				matchedMap.put(id, player);
-				return player;
+			if(matchedMap.getOrDefault(id, nullMatch).getKey() == -1) {
+				PlayerConnection playerConnection = new PlayerConnection();
+				matchedMap.put(player, new Pair(id, playerConnection));
+				matchedMap.put(id, new Pair(player, playerConnection));
+				return 1;
 			}
 			else {
 				it.remove();
@@ -77,7 +84,7 @@ public class Server {
 		return id;
 	}
 
-	public int match(int id) throws InterruptedException {
+	public int match(ClientHandler clientHandler, int id) throws InterruptedException {
 		boolean found = false;
 		int player;
 		while(true) {
@@ -88,6 +95,7 @@ public class Server {
 			}
 			Thread.sleep(2000);
 		}
+		clientHandler.setPlayerConnection(matchedMap.get(id).getValue());
 		return player;
 	}
 

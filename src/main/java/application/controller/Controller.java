@@ -1,5 +1,7 @@
 package application.controller;
-
+import  application.Client;
+import application.Movement;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.layout.Pane;
@@ -24,26 +26,56 @@ public class Controller implements Initializable {
     @FXML
     private Rectangle game_panel;
 
-    private static boolean TURN = false;
+    private static boolean TURN = true;
 
     private static final int[][] chessBoard = new int[3][3];
     private static final boolean[][] flag = new boolean[3][3];
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        game_panel.setOnMouseClicked(event -> {
-            int x = (int) (event.getX() / BOUND);
-            int y = (int) (event.getY() / BOUND);
-            if (refreshBoard(x, y)) {
-                TURN = !TURN;
-            }
-        });
+    public int id;
+    public Client client;
+
+    public void setId(int id) {
+        this.id = id + 1;
+        if(this.id == 2) {
+            TURN = false;
+        }
     }
 
-    private boolean refreshBoard (int x, int y) {
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        Platform.runLater(() -> {
+            if(TURN == false) {
+                client.getMovement((this.id - 1) ^ 1);
+            }
+            game_panel.setOnMouseClicked(event -> {
+                int x = (int) (event.getX() / BOUND);
+                int y = (int) (event.getY() / BOUND);
+                if(TURN) {
+                    if(refreshBoard(id, x, y)) {
+                        int result = client.informServer(this.id - 1, x, y);
+                        if(result == 0)
+                            client.getMovement((this.id - 1) ^ 1);
+                    }
+                }
+            });
+        });
+
+    }
+
+    public void receiveMove(Movement movement) {
+        refreshBoard(3 - id, movement.x, movement.y);
+        // Go check winning situation
+    }
+
+    private boolean refreshBoard (int id, int x, int y) {
         if (chessBoard[x][y] == EMPTY) {
-            chessBoard[x][y] = TURN ? PLAY_1 : PLAY_2;
+            chessBoard[x][y] = id;
             drawChess();
+            TURN = !TURN;
             return true;
         }
         return false;
