@@ -6,10 +6,12 @@ import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Server {
 	ServerSocket serverSocket;
-	Queue<Integer> idQueue = new LinkedList<>();
+	Queue<Integer> idQueue = new LinkedBlockingQueue<Integer>();
 	Queue<Integer> playerList = new LinkedList<>();
 	Map<Integer, Pair<Integer, PlayerConnection>> matchedMap = new HashMap<>();
 	Pair<Integer, PlayerConnection> nullMatch = new Pair(-1, null);
@@ -26,6 +28,8 @@ public class Server {
 	}
 
 	public void closedPlayer(int playerId) {
+		idQueue.add(playerId);
+		matchedMap.put(playerId, nullMatch);
 	}
 
 	public int getId() {
@@ -54,7 +58,8 @@ public class Server {
 			int player = it.next();
 			if(player == id)
 				continue;
-			if(matchedMap.getOrDefault(id, nullMatch).getKey() == -1) {
+			if(matchedMap.getOrDefault(player, nullMatch).getKey() == -1) {
+				System.out.println("Successful match! " + player + " " + id + " " + matchedMap.getOrDefault(id, nullMatch).getKey());
 				PlayerConnection playerConnection = new PlayerConnection();
 				matchedMap.put(player, new Pair(id, playerConnection));
 				matchedMap.put(id, new Pair(player, playerConnection));

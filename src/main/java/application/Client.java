@@ -37,15 +37,10 @@ public class Client {
 					});
 				} catch(IOException e) {
 					e.printStackTrace();
-					closeAll();
 					mainController.closeAll();
 				}
 			}
 		}).start();
-	}
-
-	void closeAll() {
-
 	}
 
 	void connectPlayer() {
@@ -64,7 +59,7 @@ public class Client {
 				catch (IOException e) {
 					System.out.println("Connection failed");
 					Platform.runLater(() -> {
-						mainController.primaryStage.setScene(mainController.getScene("errorScene"));
+						mainController.closeAll();
 					});
 				}
 			}
@@ -86,7 +81,7 @@ public class Client {
 		} catch (IOException e) {
 			System.out.println("Opponent player / Server crashed");
 			Platform.runLater(() -> {
-				mainController.primaryStage.setScene(mainController.getScene("errorScene"));
+				mainController.closeAll();
 			});
 			return -1;
 		}
@@ -113,7 +108,7 @@ public class Client {
 				} catch (Exception e) {
 					System.out.println("Opponent player / Server crashed");
 					Platform.runLater(() -> {
-						mainController.primaryStage.setScene(mainController.getScene("errorScene"));
+						mainController.closeAll();
 					});
 				}
 			}

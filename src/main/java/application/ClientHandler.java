@@ -85,6 +85,7 @@ public class ClientHandler implements Runnable {
 						// After a long time cannot get movement: end game, clean up
 					} catch (Exception e) {
 						sendInt(-1);
+						runFlag = false;
 					}
 				}
 			} catch (IOException e) {
@@ -95,6 +96,7 @@ public class ClientHandler implements Runnable {
 	}
 
 	void closeClientHandler() {
+		playerConnection.failedConnection = true;
 		server.closedPlayer(id);
 	}
 }

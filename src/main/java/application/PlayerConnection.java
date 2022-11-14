@@ -13,6 +13,7 @@ public class PlayerConnection {
 	int[] dx = {-1, 1, 0, 0, -1, 1, -1, 1};
 	int[] dy = {0, 0, 1, -1, -1, 1, 1, -1};
 	int gameState = 0;
+	boolean failedConnection = false;
 
 	PlayerConnection() {
 		movementLists.add(new ArrayBlockingQueue<Movement>(10));
@@ -25,15 +26,15 @@ public class PlayerConnection {
 	}
 
 	public Movement getMovement(int id) throws Exception {
-		int cnt = 0;
-		while(cnt <= 25) {
+		while(true) {
 			if(!movementLists.get(id).isEmpty()) {
 				Movement movement = movementLists.get(id).remove();
 				return movement;
 			}
 			System.out.println(id + " Is empty...");
 			Thread.sleep(500);
-			cnt += 1;
+			if(failedConnection)
+				break;
 		}
 		throw new Exception();
 	}

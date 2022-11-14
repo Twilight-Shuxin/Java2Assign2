@@ -94,6 +94,11 @@ public class Main extends Application {
 
     public void closeAll() {
         primaryStage.setScene(getScene("errorScene"));
+        try {
+            client.socket.close();
+        } catch (IOException e) {
+            System.out.println("Failed to close client socket.");
+        }
     }
 
     @Override
