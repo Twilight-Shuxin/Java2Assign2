@@ -1,5 +1,6 @@
 package application;
 
+import application.controller.Controller;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -14,6 +15,7 @@ import javafx.stage.Stage;
 import javafx.scene.text.*;
 import javafx.util.Duration;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -21,8 +23,10 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 public class Main extends Application {
-    static Client client;
-    static Stage primaryStage;
+    public Client client;
+    public Stage primaryStage;
+    public Controller controller;
+
     private HashMap<String, Pane> screens = new HashMap<>();
     int width = 600, height = 400;
 
@@ -42,7 +46,10 @@ public class Main extends Application {
     public void setupScenes() {
         setupSceneWithText("connectServerScene", "Connecting to server...");
         setupSceneWithText("connectPlayerScene", "Connecting to player...");
-        setupSceneWithText("errorScene", "Sorry, error occurred. \n Please restart game.");
+        setupSceneWithText("drawScene", "Game draw! Have a second try?");
+        setupSceneWithText("loseScene", "Lost game, it was close.");
+        setupSceneWithText("winningScene", "Congratulations! You won the game.");
+        setupSceneWithText("errorScene", "Sorry, some problems occurred. Please restart the game.");
     }
 
     public void serverConnected() {
@@ -50,11 +57,14 @@ public class Main extends Application {
         client.connectPlayer();
     }
 
-    public void playerConnected() {
+    public void playerConnected(int id) {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader();
             fxmlLoader.setLocation(getClass().getClassLoader().getResource("mainUI.fxml"));
             Pane root = fxmlLoader.load();
+            controller = fxmlLoader.<Controller>getController();
+            controller.setId(id ^ 1);
+            controller.setClient(client);
             primaryStage.setScene(new Scene(root));
             primaryStage.setResizable(false);
             primaryStage.show();
@@ -63,8 +73,32 @@ public class Main extends Application {
         }
     }
 
+    public void checkWin(int gameState, int playerId) {
+        if(gameState == 0) {
+            return;
+        }
+        playerId += 1;
+        if(gameState == 3) {
+            primaryStage.setScene(getScene("drawScene"));
+        }
+        else if(gameState == playerId) {
+            primaryStage.setScene(getScene("winningScene"));
+        }
+        else primaryStage.setScene(getScene("loseScene"));
+        try {
+            client.socket.close();
+        } catch (IOException e) {
+            System.out.println("Failed to close client socket.");
+        }
+    }
+
     public void closeAll() {
         primaryStage.setScene(getScene("errorScene"));
+        try {
+            client.socket.close();
+        } catch (IOException e) {
+            System.out.println("Failed to close client socket.");
+        }
     }
 
     @Override

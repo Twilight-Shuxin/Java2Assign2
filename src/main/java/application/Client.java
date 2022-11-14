@@ -1,9 +1,7 @@
 package application;
 import javafx.application.Platform;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -13,8 +11,8 @@ public class Client {
 	Main mainController;
 	Socket socket;
 	int serverPort;
-	InputStream inputStream;
-	OutputStream outputStream;
+	PrintWriter writer;
+	BufferedReader reader;
 	byte[] buffer = new byte[1024];
 	int id = 0;
 
@@ -29,8 +27,8 @@ public class Client {
 				try {
 					System.out.println("connecting");
 					socket = new Socket(InetAddress.getLocalHost(), 9999);
-					inputStream = socket.getInputStream();
-					outputStream = socket.getOutputStream();
+					writer = new PrintWriter(socket.getOutputStream(), true);
+					reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 					sendString("Register");
 					int id = readInt();
 					System.out.println("My id is: " + id);
@@ -39,85 +37,101 @@ public class Client {
 					});
 				} catch(IOException e) {
 					e.printStackTrace();
-					closeAll();
 					mainController.closeAll();
 				}
 			}
 		}).start();
 	}
 
-	void closeAll() {
-
-	}
-
 	void connectPlayer() {
 		new Thread(new Runnable() {
 			public void run() {
 				sendString("Match");
-				int reply = readInt();
-				if(reply >= 0) {
-					System.out.println("Connected with player " + reply);
+				try {
+					int reply = readInt();
+					if (reply >= 0) {
+						System.out.println("Connected with player " + reply);
+						Platform.runLater(() -> {
+							mainController.playerConnected(reply);
+						});
+					}
+				}
+				catch (IOException e) {
+					System.out.println("Connection failed");
 					Platform.runLater(() -> {
-						mainController.playerConnected();
+						mainController.closeAll();
 					});
 				}
 			}
 		}).start();
 	}
 
-	int readInt() {
-		int num;
-		try {
-			int len = inputStream.read(buffer);
-			num = Integer.parseInt(new String(buffer, 0, len));
+	public int informServer(int playerId, int x, int y) {
+		try{
+			sendString("Move");
+			System.out.println("I am player: " + id + " I moved on " + x + " " + y);
+			sendInt(x);
+			sendInt(y);
+			System.out.println("Sent data: " + id + " " + x + " " + y);
+			int gameState = readInt();
+			Platform.runLater(() -> {
+				mainController.checkWin(gameState, playerId);
+			});
+			return gameState;
 		} catch (IOException e) {
-			System.out.println("Failed to read int");
+			System.out.println("Opponent player / Server crashed");
+			Platform.runLater(() -> {
+				mainController.closeAll();
+			});
 			return -1;
 		}
+	}
+
+	public void getMovement(int playerId) {
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+					System.out.println("Go get! oppo: " + playerId);
+					sendString("Get");
+					sendInt(playerId);
+					int x = readInt();
+					if(x == -1) {
+						throw new Exception();
+					}
+					int y = readInt();
+					int gameState = readInt();
+					System.out.println("I am player: " + id + "My opponent moved on " + x + " " + y);
+					Platform.runLater(() -> {
+						mainController.controller.receiveMove(new Movement(x, y));
+						mainController.checkWin(gameState, playerId ^ 1);
+					});
+				} catch (Exception e) {
+					System.out.println("Opponent player / Server crashed");
+					Platform.runLater(() -> {
+						mainController.closeAll();
+					});
+				}
+			}
+		}).start();
+	}
+
+	int readInt() throws IOException {
+		int num = Integer.parseInt(reader.readLine());
 		return num;
 	}
 
 	int sendInt(int num) {
 		String numStr = Integer.toString(num);
-		try {
-			outputStream.write(numStr.getBytes());
-		} catch (IOException e) {
-			System.out.println("Failed to send int");
-			return 1;
-		}
+		writer.println(numStr);
 		return 0;
 	}
 
 	int sendString(String message) {
-		try {
-			outputStream.write(message.getBytes());
-		} catch (IOException e) {
-			System.out.println("Failed to send string");
-			return 1;
-		}
+		writer.println(message);
 		return 0;
 	}
 
-	String readString() {
-		String message;
-		try {
-			int len = inputStream.read(buffer);
-			message = new String(buffer, 0, len);
-		} catch (IOException e) {
-			System.out.println("Failed to read int");
-			return null;
-		}
-		return message;
-	}
-
-	void receiveMove() {
-		int x = readInt();
-		int y = readInt();
-		int state = readInt();
-	}
-
-	void sendMove(int x, int y) {
-		sendInt(x);
-		sendInt(y);
+	String readString() throws IOException {
+		return reader.readLine();
 	}
 }
